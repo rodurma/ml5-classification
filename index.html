@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Getting Started with ml5.js</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- p5 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.dom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.sound.min.js"></script>
+    <!-- ml5 -->
+    <script src="https://unpkg.com/ml5@0.4.3/dist/ml5.min.js"></script>
+  </head>
+
+  <body>
+    <h1>Classificando círculos com rede neural</h1>
+    <h3>Como funciona</h3>
+    <p>
+        Você irá colocar vários círculos na tela com letras distintas para poder treinar a rede neural. Cada letra deve estar mais ou menos na mesma posição.
+    </p>
+    <p>Após definir os círculos a rede irá treinar e depois você poderá clicar em qualquer parte e a rede neural irá informar qual é a letra adequada para aquele círculo.</p>
+
+    <h3>Como usar</h3>
+    <ul>
+        <li>Clique em uma posição no retângulo cinza.</li>
+        <li>Por padrão os primeiros círculos são com a letra C.</li>
+        <li>Clique várias vezes criando círculos com a mesma letra em locais aproximados.</li>
+        <li>Escolhe outra letra teclando em seu teclado.</li>
+        <li>Adicione mais círculos com a nova letra em um outro local, sempre mantendo as letras iguais próximas uma da outra.</li>
+        <li>Para iniciar o treino aperte a tecla T</li>
+        <li>Após o treino ser finalizado, você poderá clicar em qualquer local no retângulo e a rede neural irá informar qual letra é a mais adequada.</li>
+    </ul>
+    <script>
+        
+        console.log('ml5 version:', ml5.version);
+
+        let model;
+        let targetLabel = 'C';
+        // let trainingData = [];
+        let state = 'collection';
+
+        function setup() {
+            createCanvas(400, 400);
+
+            let options = {
+                inputs: ['x', 'y'],
+                outputs: ['label'],
+                task: 'classification',
+                debug: 'true',
+            };
+
+            model = ml5.neuralNetwork(options);
+
+            background(200);
+        }
+
+        function keyPressed(){
+
+            if (key == 't') {
+                state = 'training';
+                console.log('Treinamento começou...');
+                model.normalizeData();
+                let options = {
+                    epochs: 200
+                };
+                model.train(options, whileTraining, finishedTraining);
+            } else {
+                targetLabel = key.toUpperCase();
+            }
+
+        }
+
+        function whileTraining(epochs, loss){
+            console.log(epochs);
+        }
+
+        function finishedTraining(){
+            console.log('Finished training');
+            state = 'prediction';
+        }
+
+        function mousePressed() {
+
+            let inputs = {
+                x: mouseX,
+                y: mouseY,
+
+            };
+
+            if (state == 'collection'){
+                let target = {
+                    label: targetLabel
+                };
+                model.addData(inputs, target);
+
+                stroke(0);
+                noFill();
+                ellipse(mouseX, mouseY, 24);
+                fill(0);
+                noStroke();
+                textAlign(CENTER, CENTER);
+                text(targetLabel, mouseX, mouseY);
+            } else if (state == 'prediction') {
+                model.classify(inputs, gotResults);
+            }
+
+        }
+
+        function gotResults(error, results) {
+            if (error) {
+                console.log(error);
+                return;
+            }
+
+            console.log(results);
+
+            stroke(0);
+            fill(0,0,255,100);
+            ellipse(mouseX, mouseY, 24);
+            fill(0);
+            noStroke();
+            textAlign(CENTER, CENTER);
+            text(results[0].label, mouseX, mouseY);
+        }
+
+        function draw() {
+            
+        }
+    </script>
+  </body>
+</html>
